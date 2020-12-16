@@ -8,6 +8,11 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
+from tempfile import mkdtemp
+from flask_session import Session
+
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -17,45 +22,82 @@ from forms import *
 #----------------------------------------------------------------------------#
 
 app = Flask(__name__)
+
+# Ensure responses aren't cached
+@app.after_request
+def after_request(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Expires"] = 0
+    response.headers["Pragma"] = "no-cache"
+    return response
+
 moment = Moment(app)
+#Connect to SQL database -> config.py
 app.config.from_object('config')
+#Filesystem session instead of signed cookies
+Session(app)
+#Instance of SQLAlchemy
 db = SQLAlchemy(app)
+#Initialize Flask Migrate
+migrate = Migrate(app, db)
 
 # TODO: connect to a local postgresql database
 
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+#Many to many relationships -> Association table
+fyyur = db.Table("fyyur",
+    db.Column("venue_id", db.Integer, db.ForeignKey("venue.id"), primary_key=True),
+    db.Column("artist_id", db.Integer, db.ForeignKey("artist.id"), primary_key=True),
+    db.Column("show_id", db.Integer, db.ForeignKey("show.id"), primary_key=True)
+)
 
-class Venue(db.Model):
-    __tablename__ = 'Venue'
+#Parent
+class Show(db.Model):
+    __tablename__ = "show"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    #Own data
+    start_time = db.Column(db.DateTime(), nullable=False)
+    #Relationships
+    venues = db.relationship('Venue', secondary=fyyur,
+        backref=db.backref('shows'), lazy=True)
+    artists = db.relationship('Artist', secondary=fyyur,
+        backref=db.backref('shows', lazy=True))
+
+#Child
+class Venue(db.Model):
+    __tablename__ = "venue"
+    #Own data
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    website = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    seeking_talent = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(500), default="")
+    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
+#Child
 class Artist(db.Model):
-    __tablename__ = 'Artist'
-
+    __tablename__ = "artist"
+    #Own data
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String(), nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    website = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    seeking_venue = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(500), default="")
+    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -87,6 +129,10 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
+
+  venues = Venue.query.order_by('id').all()
+
+
   data=[{
     "city": "San Francisco",
     "state": "CA",
@@ -221,6 +267,10 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+
+  #try:
+     #venue
+
 
   # on successful db insert, flash success
   flash('Venue ' + request.form['name'] + ' was successfully listed!')
