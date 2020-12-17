@@ -79,7 +79,7 @@ class Venue(db.Model):
     website = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    seeking_talent = db.Column(db.Boolean, default=False)
+    seeking_talent = db.Column(db.String(5), default=False)
     seeking_description = db.Column(db.String(500), default="")
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
 
@@ -268,16 +268,37 @@ def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
 
-  #try:
-     #venue
+    #try:
+    form = VenueForm(request.form)
 
+    venue = Venue(
+        name = form.name.data,
+        city = form.city.data,
+        state = form.state.data,
+        address = form.address.data,
+        phone = form.phone.data,
+        website = form.website.data,
+        image_link = form.image_link.data,
+        facebook_link = form.facebook_link.data,
+        seeking_talent = form.seeking_talent.data,
+        seeking_description = form.seeking_description.data,
+        genres = form.genres.data
+    )
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+    db.session.add(venue)
+    db.session.commit()
+    # on successful db insert, flash success
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    #except:
+        # on unsuccessful db insert, flash an error instead.
+        #flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+        #db.session.rollback()
+    # finally:
+    #     db.session.close()
+
+    return render_template('pages/home.html')
+
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
