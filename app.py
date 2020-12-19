@@ -124,7 +124,7 @@ def index():
 
 #  Venues
 #  ----------------------------------------------------------------
-
+"""Venues overview"""
 @app.route('/venues')
 def venues():
     #Venues overview list, grouped by same locations and unique -> distinct
@@ -161,6 +161,7 @@ def search_venues():
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
+"""Venue detail page"""
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
@@ -245,9 +246,7 @@ def show_venue(venue_id):
   data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
 
-#  Create Venue
-#  ----------------------------------------------------------------
-
+"""Create Venue"""
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
@@ -255,37 +254,35 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
 
-    #try:
-    form = VenueForm(request.form)
+    try:
+        form = VenueForm(request.form)
 
-    venue = Venue(
-        name = form.name.data,
-        city = form.city.data,
-        state = form.state.data,
-        address = form.address.data,
-        phone = form.phone.data,
-        website = form.website.data,
-        image_link = form.image_link.data,
-        facebook_link = form.facebook_link.data,
-        seeking_talent = form.seeking_talent.data,
-        seeking_description = form.seeking_description.data,
-        genres = form.genres.data
-    )
+        venue = Venue(
+            name = form.name.data,
+            city = form.city.data,
+            state = form.state.data,
+            address = form.address.data,
+            phone = form.phone.data,
+            website = form.website.data,
+            image_link = form.image_link.data,
+            facebook_link = form.facebook_link.data,
+            seeking_talent = form.seeking_talent.data,
+            seeking_description = form.seeking_description.data,
+            genres = form.genres.data
+        )
 
-    db.session.add(venue)
-    db.session.commit()
-    # on successful db insert, flash success
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    flash('Venue ' + request.form['name'] + ' was successfully listed!')
-    #except:
-        # on unsuccessful db insert, flash an error instead.
+        db.session.add(venue)
+        db.session.commit()
+        # on successful db insert, flash success
+        # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+        flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    except:
+        #on unsuccessful db insert, flash an error instead.
         #flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
-        #db.session.rollback()
-    # finally:
-    #     db.session.close()
+        db.session.rollback()
+    finally:
+        db.session.close()
 
     return render_template('pages/home.html')
 
@@ -463,9 +460,7 @@ def edit_venue_submission(venue_id):
   # venue record with ID <venue_id> using the new attributes
   return redirect(url_for('show_venue', venue_id=venue_id))
 
-#  Create Artist
-#  ----------------------------------------------------------------
-
+"""Create Artist"""
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
