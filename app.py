@@ -65,7 +65,7 @@ class Venue(db.Model):
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     #Debugging print out formatting
     def __repr__(self):
-        return f'<Todo {self.id} {self.name}>'
+        return f'<Venue {self.id} {self.name}>'
 
 class Artist(db.Model):
     __tablename__ = "artists"
@@ -83,7 +83,7 @@ class Artist(db.Model):
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     #Debugging print out formatting
     def __repr__(self):
-        return f'<Todo {self.id} {self.name}>'
+        return f'<Artist {self.id} {self.name}>'
 
 class Show(db.Model):
     __tablename__ = "shows"
@@ -99,7 +99,7 @@ class Show(db.Model):
     artists = db.relationship('Artist', backref=db.backref('shows', cascade='all, delete'))
     #Debugging print out formatting
     def __repr__(self):
-        return f'<Todo {self.id} {self.venue_id} {self.artist_id}>'
+        return f'<Show {self.id} {self.venue_id} {self.artist_id}>'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -137,7 +137,7 @@ def venues():
     #Loop trough city/state list and combine venues in a list data at same location
     #Dict structure of each list item necessary for html front end
     for loc in city_state:
-        same_loc = db.session.query(Venue.id, Venue.name) \
+        same_loc = db.session.query(Venue.id, Venue.name).order_by(Venue.name) \
             .filter(Venue.city == loc[0]) \
             .filter(Venue.state == loc[1])
         data.append({
@@ -223,28 +223,35 @@ def create_venue_form():
 def create_venue_submission():
 
     try:
-    #Get user input form data from HTML
+        #Get user input form data from HTML
         form = VenueForm(request.form)
+        #Duplicate check, if name is already ecisiting in db -> skip
+        name = form.name.data
+        #Ensure duplicate checks, even if db has already duplicates -> all()[0]
+        try:
+            db_name = Venue.query.filter_by(name=name).all()[0]
+            if db_name.name == name:
+                flash('Venue ' + request.form['name'] + ' already exists!')
+        except:
+            venue = Venue(
+                name = form.name.data,
+                city = form.city.data,
+                state = form.state.data,
+                address = form.address.data,
+                phone = form.phone.data,
+                website = form.website.data,
+                image_link = form.image_link.data,
+                facebook_link = form.facebook_link.data,
+                seeking_talent = form.seeking_talent.data,
+                seeking_description = form.seeking_description.data,
+                genres = form.genres.data
+            )
 
-        venue = Venue(
-            name = form.name.data,
-            city = form.city.data,
-            state = form.state.data,
-            address = form.address.data,
-            phone = form.phone.data,
-            website = form.website.data,
-            image_link = form.image_link.data,
-            facebook_link = form.facebook_link.data,
-            seeking_talent = form.seeking_talent.data,
-            seeking_description = form.seeking_description.data,
-            genres = form.genres.data
-        )
-
-        db.session.add(venue)
-        db.session.commit()
-        # on successful db insert, flash success
-        # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-        flash('Venue ' + request.form['name'] + ' was successfully listed!')
+            db.session.add(venue)
+            db.session.commit()
+            # on successful db insert, flash success
+            # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+            flash('Venue ' + request.form['name'] + ' was successfully listed!')
     except:
         #on unsuccessful db insert, flash an error instead.
         db.session.rollback()
@@ -401,24 +408,31 @@ def create_artist_submission():
     try:
         #Get user input form data from HTML
         form = ArtistForm(request.form)
+        #Duplicate check, if name is already ecisiting in db -> skip
+        name = form.name.data
+        #Ensure duplicate checks, even if db has already duplicates -> all()[0]
+        try:
+            db_name = Artist.query.filter_by(name=name).all()[0]
+            if db_name.name == name:
+                flash('Artist ' + request.form['name'] + ' already exists!')
+        except:
+            artist = Artist(
+                name = form.name.data,
+                city = form.city.data,
+                state = form.state.data,
+                phone = form.phone.data,
+                website = form.website.data,
+                image_link = form.image_link.data,
+                facebook_link = form.facebook_link.data,
+                seeking_venue = form.seeking_venue.data,
+                seeking_description = form.seeking_description.data,
+                genres = form.genres.data,
+            )
 
-        artist = Artist(
-            name = form.name.data,
-            city = form.city.data,
-            state = form.state.data,
-            phone = form.phone.data,
-            website = form.website.data,
-            image_link = form.image_link.data,
-            facebook_link = form.facebook_link.data,
-            seeking_venue = form.seeking_venue.data,
-            seeking_description = form.seeking_description.data,
-            genres = form.genres.data,
-        )
-
-        db.session.add(artist)
-        db.session.commit()
-        # on successful db insert, flash success
-        flash('Artist ' + request.form['name'] + ' was successfully listed!')
+            db.session.add(artist)
+            db.session.commit()
+            # on successful db insert, flash success
+            flash('Artist ' + request.form['name'] + ' was successfully listed!')
     except:
         db.session.rollback()
         flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed.')
