@@ -63,6 +63,9 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.String(5), default=False)
     seeking_description = db.Column(db.String(500))
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
+    #Debugging print out formatting
+    def __repr__(self):
+        return f'<Todo {self.id} {self.name}>'
 
 class Artist(db.Model):
     __tablename__ = "artists"
@@ -78,6 +81,9 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.String(5), default=False)
     seeking_description = db.Column(db.String(500))
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
+    #Debugging print out formatting
+    def __repr__(self):
+        return f'<Todo {self.id} {self.name}>'
 
 class Show(db.Model):
     __tablename__ = "shows"
@@ -91,6 +97,9 @@ class Show(db.Model):
     #Relationships
     venues = db.relationship('Venue', backref=db.backref('shows', cascade='all, delete'))
     artists = db.relationship('Artist', backref=db.backref('shows', cascade='all, delete'))
+    #Debugging print out formatting
+    def __repr__(self):
+        return f'<Todo {self.id} {self.venue_id} {self.artist_id}>'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -103,7 +112,7 @@ def format_datetime(value, format='medium'):
   elif format == 'medium':
       format="EE MM, dd, y h:mma"
   return babel.dates.format_datetime(date, format)
-
+#Jinja Filter, called with "|"
 app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
@@ -400,46 +409,62 @@ def create_artist_submission():
 """Shows overview"""
 @app.route('/shows')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "venue_id": 1,
-    "venue_name": "The Musical Hop",
-    "artist_id": 4,
-    "artist_name": "Guns N Petals",
-    "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    "start_time": "2019-05-21T21:30:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 5,
-    "artist_name": "Matt Quevedo",
-    "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    "start_time": "2019-06-15T23:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-01T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-08T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-15T20:00:00.000Z"
-  }]
-  return render_template('pages/shows.html', shows=data)
+    # displays list of shows at /shows, chronological sorted
+    shows = Show.query.order_by('start_time').all()
+    #Create data list with joined data from Artist and Venue table
+    data = []
+    for show in shows:
+        #Append dict, as needed by HTML
+        data.append({
+            "artist_image_link" : show.artists.image_link,
+            "start_time" : show.start_time.strftime("%Y-%m-%d %H:%M"),
+            "artist_id" : show.artist_id,
+            "artist_name" : show.artists.name,
+            "venue_id" : show.venue_id,
+            "venue_name" : show.venues.name
+        })
+
+
+
+
+    datas=[{
+        "venue_id": 1,
+        "venue_name": "The Musical Hop",
+        "artist_id": 4,
+        "artist_name": "Guns N Petals",
+        "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+        "start_time": "2019-05-21T21:30:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 5,
+        "artist_name": "Matt Quevedo",
+        "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
+        "start_time": "2019-06-15T23:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-01T20:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-08T20:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-15T20:00:00.000Z"
+    }]
+
+    return render_template('pages/shows.html', shows=data)
 
 """Create Show"""
 @app.route('/shows/create')
