@@ -99,11 +99,11 @@
 </section>
 
 <script type="text/javascript">
-	const del_btn = document.getElementById('delete_venue');
-	del_btn.onclick = function(e) {
+	const del_btn_venue = document.getElementById('delete_venue');
+	del_btn_venue.onclick = function(e) {
 		console.log('Delete function', e);
 		const id = e.target.dataset['id'];
-		fetch('/venues/' + id, {
+		fetch('/venues/' + id + '/delete', {
 			method: 'DELETE'
 		})
 		.then(response => {

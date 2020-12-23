@@ -50,7 +50,7 @@
 		{% endif %}
 	</div>
 	<div class="col-sm-6">
-		<img src="{{ artist.image_link }}" alt="Venue Image" />
+		<img src="{{ artist.image_link }}" alt="Artist Image" />
 	</div>
 </div>
 <section>
@@ -86,5 +86,27 @@
 		{% endfor %}
 	</div>
 </section>
+<section>
+	<button class="btn btn-danger" id="delete_artist" data-id="{{ artist.id }}">
+		Delete Artist
+	</button>
+</section>
+
+<script type="text/javascript">
+	const del_btn_artist = document.getElementById('delete_artist');
+	del_btn_artist.onclick = function(e) {
+		console.log('Delete function', e);
+		const id = e.target.dataset['id'];
+		fetch('/artists/' + id + '/delete', {
+			method: 'DELETE'
+		})
+		.then(response => {
+			window.location.href = response.url;
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+</script>
 
 {% endblock %}
