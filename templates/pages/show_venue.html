@@ -92,18 +92,38 @@
 		{% endfor %}
 	</div>
 </section>
+<br>
 <section>
+	<button class="btn btn-warning" id="edit_venue" data-id="{{ venue.id }}">
+		Edit Venue
+	</button>
 	<button class="btn btn-danger" id="delete_venue" data-id="{{ venue.id }}">
 		Delete Venue
 	</button>
 </section>
 
 <script type="text/javascript">
+//Edit
+	const ed_btn_venue = document.getElementById('edit_venue');
+	ed_btn_venue.onclick = function(e) {
+		console.log('Edit function', e);
+		const id_ed = e.target.dataset['id'];
+		fetch('/venues/' + id_ed + '/edit', {
+			method: 'GET'
+		})
+		.then(response => {
+			window.location.href = response.url;
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+//Delete
 	const del_btn_venue = document.getElementById('delete_venue');
 	del_btn_venue.onclick = function(e) {
 		console.log('Delete function', e);
-		const id = e.target.dataset['id'];
-		fetch('/venues/' + id + '/delete', {
+		const id_del = e.target.dataset['id'];
+		fetch('/venues/' + id_del + '/delete', {
 			method: 'DELETE'
 		})
 		.then(response => {
