@@ -87,17 +87,37 @@
 	</div>
 </section>
 <section>
+	<button class="btn btn-warning" id="edit_artist" data-id="{{ artist.id }}">
+		Edit Artist
+	</button>
 	<button class="btn btn-danger" id="delete_artist" data-id="{{ artist.id }}">
 		Delete Artist
 	</button>
 </section>
 
 <script type="text/javascript">
+//Edit
+	const ed_btn_artist = document.getElementById('edit_artist');
+	ed_btn_artist.onclick = function(e) {
+		console.log('Edit function', e);
+		const id_ed = e.target.dataset['id'];
+		fetch('/artists/' + id_ed + '/edit', {
+			method: 'GET'
+		})
+		.then(response => {
+			window.location.href = response.url;
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+
+//Delete
 	const del_btn_artist = document.getElementById('delete_artist');
 	del_btn_artist.onclick = function(e) {
 		console.log('Delete function', e);
-		const id = e.target.dataset['id'];
-		fetch('/artists/' + id + '/delete', {
+		const id_del = e.target.dataset['id'];
+		fetch('/artists/' + id_del + '/delete', {
 			method: 'DELETE'
 		})
 		.then(response => {

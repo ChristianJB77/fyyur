@@ -281,6 +281,7 @@ def delete_venue(venue_id):
 
     return redirect("/")
 
+"""Edit Venue"""
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
@@ -296,6 +297,7 @@ def edit_venue(venue_id):
   form.website.data = venue.website
   form.seeking_talent.data = venue.seeking_talent
   form.seeking_description.data = venue.seeking_description
+
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
@@ -306,7 +308,6 @@ def edit_venue_submission(venue_id):
     #Duplicate check, if name is already ecisiting in db -> skip
     name = form.name.data
     try:
-
         venue.name = name
         venue.city = form.city.data
         venue.state = form.state.data
@@ -403,49 +404,6 @@ def show_artist(artist_id):
 
     return render_template('pages/show_artist.html', artist=data)
 
-"""Delete Artist"""
-@app.route('/artists/<int:artist_id>/delete', methods=['DELETE'])
-def delete_artist(artist_id):
-    try:
-        #Cascading delete implemented in Model (Foreign Key and Relationships)
-        Artist.query.filter_by(id=artist_id).delete()
-        db.session.commit()
-        flash('Artist has been DELETED!')
-    except:
-        db.session.rollback()
-        flash('Error: Artist was NOT deleted!')
-    finally:
-        db.session.close()
-
-    return redirect("/")
-
-@app.route('/artists/<int:artist_id>/edit', methods=['GET'])
-def edit_artist(artist_id):
-  form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
-  # TODO: populate form with fields from artist with ID <artist_id>
-  return render_template('forms/edit_artist.html', form=form, artist=artist)
-
-@app.route('/artists/<int:artist_id>/edit', methods=['POST'])
-def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
-
-  return redirect(url_for('show_artist', artist_id=artist_id))
-
-
 
 """Create Artist"""
 @app.route('/artists/create', methods=['GET'])
@@ -491,6 +449,74 @@ def create_artist_submission():
         db.session.close()
 
     return render_template('pages/home.html')
+
+
+"""Delete Artist"""
+@app.route('/artists/<int:artist_id>/delete', methods=['DELETE'])
+def delete_artist(artist_id):
+    try:
+        #Cascading delete implemented in Model (Foreign Key and Relationships)
+        Artist.query.filter_by(id=artist_id).delete()
+        db.session.commit()
+        flash('Artist has been DELETED!')
+    except:
+        db.session.rollback()
+        flash('Error: Artist was NOT deleted!')
+    finally:
+        db.session.close()
+
+    return redirect("/")
+
+
+"""Edit Artist"""
+@app.route('/artists/<int:artist_id>/edit', methods=['GET'])
+def edit_artist(artist_id):
+    form = ArtistForm()
+    artist = Artist.query.filter_by(id=artist_id).one()
+    form.name.data = artist.name
+    form.city.data = artist.city
+    form.state.data = artist.state
+    form.phone.data = artist.phone
+    form.genres.data = artist.genres
+    form.image_link.data = artist.image_link
+    form.facebook_link.data = artist.facebook_link
+    form.website.data = artist.website
+    form.seeking_venue.data = artist.seeking_venue
+    form.seeking_description.data = artist.seeking_description
+
+    return render_template('forms/edit_artist.html', form=form, artist=artist)
+
+@app.route('/artists/<int:artist_id>/edit', methods=['POST'])
+def edit_artist_submission(artist_id):
+    #Get user input form data from HTML
+    form = ArtistForm(request.form)
+    artist = Artist.query.get(artist_id)
+    #Duplicate check, if name is already ecisiting in db -> skip
+    name = form.name.data
+    try:
+        artist.name = name
+        artist.city = form.city.data
+        artist.state = form.state.data
+        artist.phone = form.phone.data
+        artist.website = form.website.data
+        artist.image_link = form.image_link.data
+        artist.facebook_link = form.facebook_link.data
+        artist.seeking_venue = form.seeking_venue.data
+        artist.seeking_description = form.seeking_description.data
+        artist.genres = form.genres.data
+
+        db.session.commit()
+        # on successful db insert, flash success
+        # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+        flash('Artist ' + name + ' was successfully UPDATED!')
+    except:
+        #on unsuccessful db insert, flash an error instead.
+        db.session.rollback()
+        flash('An error occurred. Artist ' + name + ' could not be UPDATED!')
+    finally:
+        db.session.close()
+
+    return redirect(url_for('show_artist', artist_id=artist_id))
 
 
 #  Shows
